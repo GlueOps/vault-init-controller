@@ -1,2 +1,3 @@
+## Vault init controller
 
-### A controller that watches for vault pods and unseals the vault server 
+#### A controller that watches for vault pods and unseals the vault server 
