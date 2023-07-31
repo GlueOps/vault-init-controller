@@ -2,6 +2,7 @@ import time
 import vault_k8s_utils.utils as vault_k8s_utils
 from utils.logging_config import logger
 import warnings
+import os 
 
 warnings.filterwarnings("ignore")
 
@@ -11,10 +12,11 @@ vault_unseal_url_path  = '/v1/sys/unseal'
 
 if __name__ == "__main__":
     
-    namespace = "glueops-core-vault"
-    vault_k8s_service_name = "vault-internal"
-    reconcile_period = 5 
-    service_port = "8200"
+     # Read values from environment variables if available, otherwise use default values
+    namespace = os.getenv("NAMESPACE", "glueops-core-vault")
+    vault_k8s_service_name = os.getenv("VAULT_K8S_SERVICE_NAME", "vault-internal")
+    reconcile_period = int(os.getenv("RECONCILE_PERIOD", "5"))
+    service_port = os.getenv("SERVICE_PORT", "8200")
 
     vaultClient = vault_k8s_utils.VaultManager(namespace,vault_k8s_service_name,service_port)
     # Start the control loop to watch the vault pods
