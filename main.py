@@ -1,22 +1,25 @@
-import os 
 import time
 import vault_k8s_utils.utils as vault_k8s_utils
 from utils.logging_config import logger
+import warnings
 
+warnings.filterwarnings("ignore")
+
+
+vault_status_url_path  = '/v1/sys/health'
+vault_unseal_url_path  = '/v1/sys/unseal'
 
 if __name__ == "__main__":
     
     namespace = "glueops-core-vault"
-    retry_threshold = 5
-    retry_count = 0     # TODO: Use retry_threshold if necessary
+    vault_k8s_service_name = "vault-internal"
+    reconcile_period = 5 
+    service_port = "8200"
 
-    current_dir = os.getcwd()
-    terraform_dir = os.path.join(current_dir,'terraform/vault-init','.terraform')
-    os.chdir(current_dir+"/terraform/vault-init")
-
+    vaultClient = vault_k8s_utils.VaultManager(namespace,vault_k8s_service_name,service_port)
     # Start the control loop to watch the vault pods
     while(True):
-        vault_pods = vault_k8s_utils.get_vault_pods(namespace)
+        vault_pods = vaultClient.get_vault_pods()
         all_pods_running = True
         for pod in vault_pods:
             if(pod.status.phase == "Running"):
@@ -26,13 +29,20 @@ if __name__ == "__main__":
                 break
         if(all_pods_running == False):
             logger.info("Not all vault pods are up and running....Retrying after 5 seconds")
-            time.sleep(5)
+            time.sleep(reconcile_period)
             continue
         else: 
             logger.info("All vaults pods are up and running")
-            # check if vault is unsealed or not
-            vault_status = vault_k8s_utils.get_vault_status()
-            if(vault_status['Sealed'] == 'false' and vault_status['Initialized'] == 'true'):
-                logger.info('Vault is already unsealed and ready to use')
+            # check vault status 
+            if(not vaultClient.isVaultIntialized()):
+                vaultClient.initializeVault()
             else:
-                vault_k8s_utils.init_vault(terraform_dir)
+               logger.info('Vault is already Initialized')
+            for i in range(0,3):
+               #check if each vault server in the cluster is unsealed
+                if(vaultClient.isVaultSealed("https://"+"vault-"+str(i)+"."+vault_k8s_service_name+"."+namespace+":"+service_port+vault_status_url_path)):
+                   vaultClient.vaultUnseal("https://"+"vault-"+str(i)+"."+vault_k8s_service_name+"."+namespace+":"+service_port+vault_unseal_url_path)
+                else:
+                   logger.info("vault-"+str(i)+" is already unsealed")
+                 # TODO: Add vault health check 
+        time.sleep(reconcile_period)

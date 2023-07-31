@@ -1,12 +1,24 @@
-# logging_config.py
 import logging
+from utils.json_log_formatter import JsonFormatter
+import os
 
-def setup_logger():
-    # Configure logging to send logs to stdout
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 
-    # Create and return a logger instance
-    return logging.getLogger("my_app")
+#=== configure logging
+# json formatter
+json_formatter = JsonFormatter()
 
-# Initialize the shared logger
-logger = setup_logger()
+# stream handler
+stream_handler = logging.StreamHandler()
+stream_handler.setFormatter(json_formatter)
+stream_handler.setLevel(os.getenv(
+    'PYTHON_LOG_LEVEL',
+    'INFO'
+))
+
+# configure logger
+logger = logging.getLogger('VAULT_INIT')
+logger.setLevel(os.getenv(
+    'PYTHON_LOG_LEVEL',
+    'INFO'
+))
+logger.addHandler(stream_handler)
