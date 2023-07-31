@@ -1,0 +1,17 @@
+name: vault-init-debug
+autocreate: true 
+image: okteto/python:3
+command: ["/bin/sh"]
+workdir: /app
+context: arn:aws:eks:us-west-2:922926287963:cluster/captain-cluster
+namespace: glueops-core-vault
+securityContext:
+  capabilities:
+    add:
+    - SYS_PTRACE
+sync:
+  - .:/app  
+forward:
+  - 8080:8080
+  - 2345:2345
+
