@@ -1,7 +1,7 @@
 from kubernetes import client, config
 import requests
 from utils.logging_config import logger
-import secret_backend 
+from secret_backend import config as secret_config
 
 # setting cluster config
 try:
@@ -19,18 +19,19 @@ vault_init_url_path = '/v1/sys/init'
 
 class VaultManager:
 
-  def __init__(self,vault_namespace,vault_k8s_service_name,service_port):
+  def __init__(self,vault_namespace,vault_k8s_service_name,service_port,leader_vault):
      self.vault_namespace = vault_namespace
      self.vault_k8s_service_name = vault_k8s_service_name
      self.service_port = service_port
-
+     self.leader_vault = leader_vault
+  
   def get_vault_pods(self):
       try:
           # Create a Kubernetes API client
           v1 = client.CoreV1Api()
 
           # Get vault pods in the cluster in the vault namespace
-          pods = v1.list_namespaced_pod(self.vault_namespace)
+          pods = v1.list_namespaced_pod(self.vault_namespace,label_selector="app.kubernetes.io/name=vault")
           return pods.items
 
       except Exception as e:
@@ -38,7 +39,7 @@ class VaultManager:
           return []
 
   def isVaultIntialized(self):
-      vault_init_url = "https://"+self.vault_k8s_service_name+"."+self.vault_namespace+":"+self.service_port+vault_init_url_path
+      vault_init_url = "https://"+self.leader_vault+"."+self.vault_k8s_service_name+"."+self.vault_namespace+":"+self.service_port+vault_init_url_path
       response = requests.get(vault_init_url,verify=False)
       return response.json()['initialized']
 
@@ -47,15 +48,19 @@ class VaultManager:
     return status['sealed']
 
   def initializeVault(self,shares=5, threshold=3):
+    logger.info("Starting to initialize vault...")
     payload = '{"secret_shares" : %d, "secret_threshold" : %d}' % (shares, threshold)
-    vault_init_url = "https://"+self.vault_k8s_service_name+"."+self.vault_namespace+":"+self.service_port+vault_init_url_path
-    try:
-      r = requests.put(vault_init_url, data=payload,verify=False)
-      secret_backend.saveVaultConfiguration(r.text)
-      return r.json()
-    except (requests.exceptions.ConnectionError, requests.exceptions.Timeout):
-      logger.error("ERR: Error connecting to Vault server")
-      exit()
+    vault_init_url = "https://"+self.leader_vault+"."+self.vault_k8s_service_name+"."+self.vault_namespace+":"+self.service_port+vault_init_url_path
+    if(secret_config.bucketExists):
+      try:
+        r = requests.put(vault_init_url, data=payload,verify=False)
+        secret_config.saveVaultConfiguration(r.text)
+        return r.json()
+      except (requests.exceptions.ConnectionError, requests.exceptions.Timeout):
+        logger.error("ERR: Error connecting to Vault server")
+        exit()
+    else:
+       exit()
 
   def vaultGetSealStatus(self,vault_url):
     try:
@@ -66,11 +71,11 @@ class VaultManager:
       exit()
 
   def vaultUnseal(self,vault_url):
-      if not secret_backend.configFileExists():
+      if not secret_config.configFileExists():
           logger.error("ERR: Vault config file not found")
           exit()
 
-      config = secret_backend.loadVaultConfiguration()
+      config = secret_config.loadVaultConfiguration()
       keys = config['keys']
 
       threshold = 3
