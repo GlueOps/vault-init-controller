@@ -23,19 +23,23 @@ if __name__ == "__main__":
     pause_reconcile = os.getenv("PAUSE_RECONCILE","false")
     
     vaultClient = vault_k8s_utils.VaultManager(namespace,vault_sts_name,vault_k8s_service_name,service_port,vault_label_selector)
+
     # Start the control loop to watch the vault pods
     while(True):
+
         # Pause reconciling if PAUSE_RECONCILE is true 
         if(pause_reconcile == "true"):
             logger.info("Reconciling have been paused on vault servers...")
             time.sleep(reconcile_period)
             continue
+
         logger.info("Reconciling on vault server...")
         vault_pods = vaultClient.get_vault_pods()
         if(len(vault_pods) == 0):
             logger.info("No vault pods found with the label "+vault_label_selector+" in "+namespace)
             time.sleep(reconcile_period)
             continue
+        
         all_pods_running = True
         for pod in vault_pods:
             if(pod.status.phase == "Running"):
@@ -43,6 +47,7 @@ if __name__ == "__main__":
             else:
                 all_pods_running = False
                 break
+            
         if(all_pods_running == False):
             logger.info("Not all vault pods are up and running....Retrying after 5 seconds")
             time.sleep(reconcile_period)
