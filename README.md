@@ -16,4 +16,4 @@ The GlueOps vault init controller project utilizes environment variables to conf
 | `SERVICE_PORT`             | Port number on which Vault service is exposed.    | `8200`                        |
 | `VAULT_S3_BUCKET`          | The s3 bucket to store the vault unseal keys .    | `vault-backend-glueops`       |
 | `VAULT_SECRET_FILE`        | The file path in the s3 bucket.                   | `vault-config.json`           |
-| `PAUSE_RECONCILE  `        | To pause the reconcile of the controller.         | `true`                        |   
+| `PAUSE_RECONCILE  `        | To pause the reconcile of the controller.         | `false`                        |   
