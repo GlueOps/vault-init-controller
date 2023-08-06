@@ -6,12 +6,14 @@
 
 The GlueOps vault init controller project utilizes environment variables to configure its behavior. The following table outlines the environment variables and their default values if not explicitly set:
 
-| Environment Variable       | Description                                       | Default Value       |
-|--------------------------- |---------------------------------------------------|---------------------|
-| `NAMESPACE`                | Kubernetes namespace in which Vault is deployed.  | `glueops-core-vault`|
-| `VAULT_K8S_SERVICE_NAME`   | The name of the Kubernetes service for Vault.     | `vault-internal`    |
-| `RECONCILE_PERIOD`         | Interval (in minutes) for secret reconciliation.  | `5`                 |
-| `SERVICE_PORT`             | Port number on which Vault service is exposed.    | `8200`              |
+| Environment Variable       | Description                                       | Default Value                 |
+|--------------------------- |---------------------------------------------------|-------------------------------|
+| `NAMESPACE`                | Kubernetes namespace in which Vault is deployed.  | `glueops-core-vault`          |
+| `VAULT_STS_NAME        `   | The name of the Kubernetes statefulset for Vault. | `vault`                       |
+| `VAULT_LABEL_SELECTOR  `   | The label selector for the vault pods .           | `app.kubernetes.io/name=vault`|
+| `VAULT_K8S_SERVICE_NAME`   | The name of the Kubernetes service for Vault.     | `vault-internal`              |
+| `RECONCILE_PERIOD`         | Interval (in minutes) for secret reconciliation.  | `10`                          |
+| `SERVICE_PORT`             | Port number on which Vault service is exposed.    | `8200`                        |
 
 
 ## Usage
