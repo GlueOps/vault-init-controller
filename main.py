@@ -20,10 +20,16 @@ if __name__ == "__main__":
     service_port = os.getenv("SERVICE_PORT", "8200")
     vault_label_selector = os.getenv("VAULT_LABEL","app.kubernetes.io/name=vault")
     reconcile_period = int(os.getenv("RECONCILE_PERIOD", "10"))
-
+    pause_reconcile = os.getenv("PAUSE_RECONCILE","false")
+    
     vaultClient = vault_k8s_utils.VaultManager(namespace,vault_sts_name,vault_k8s_service_name,service_port,vault_label_selector)
     # Start the control loop to watch the vault pods
     while(True):
+        # Pause reconciling if PAUSE_RECONCILE is true 
+        if(pause_reconcile == "true"):
+            logger.info("Reconciling have been paused on vault servers...")
+            time.sleep(reconcile_period)
+            continue
         logger.info("Reconciling on vault server...")
         vault_pods = vaultClient.get_vault_pods()
         if(len(vault_pods) == 0):
