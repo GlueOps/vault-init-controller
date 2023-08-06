@@ -27,7 +27,7 @@ if __name__ == "__main__":
         logger.info("Reconciling on vault server...")
         vault_pods = vaultClient.get_vault_pods()
         if(len(vault_pods) == 0):
-            logger.info("No vault pods found with the label"+vault_label_selector+"in "+namespace)
+            logger.info("No vault pods found with the label "+vault_label_selector+" in "+namespace)
             time.sleep(reconcile_period)
             continue
         all_pods_running = True
