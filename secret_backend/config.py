@@ -1,10 +1,11 @@
 import boto3
 import json 
 from utils.logging_config import logger
+import os 
 
 # Replace this with your bucket name
-bucket_name = 'vault-backend-glueops'
-file_key = 'vault-config.json'
+bucket_name = os.getenv("VAULT_S3_BUCKET", "vault-backend-glueops")
+file_key = os.getenv("VAULT_SECRET_FILE", "vault-config.json")
 
 # Create a global S3 client
 s3 = boto3.client('s3')
