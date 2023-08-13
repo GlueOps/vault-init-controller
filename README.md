@@ -17,3 +17,7 @@ The GlueOps vault init controller project utilizes environment variables to conf
 | `VAULT_S3_BUCKET`          | The s3 bucket to store the vault unseal keys .    | `vault-backend-glueops`       |
 | `VAULT_SECRET_FILE`        | The file path in the s3 bucket.                   | `vault-config.json`           |
 | `PAUSE_RECONCILE  `        | To pause the reconcile of the controller.         | `false`                        |   
+
+## Prerequisite
+
+The VM where the applicaiton is running is expected to have the permissions to write to the s3 bucket that is mentioned in `VAULT_S3_BUCKET` env variable above.
