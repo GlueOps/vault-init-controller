@@ -21,6 +21,8 @@ if __name__ == "__main__":
     vault_label_selector = os.getenv("VAULT_LABEL","app.kubernetes.io/name=vault")
     reconcile_period = int(os.getenv("RECONCILE_PERIOD", "10"))
     pause_reconcile = os.getenv("PAUSE_RECONCILE","false")
+    vault_key_shares = int(os.getenv("VAULT_KEY_SHARES","1"))
+    vault_key_threshold = int(os.getenv("VAULT_KEY_THRESHOLD","1"))
     
     vaultClient = vault_k8s_utils.VaultManager(namespace,vault_sts_name,vault_k8s_service_name,service_port,vault_label_selector)
 
@@ -56,13 +58,14 @@ if __name__ == "__main__":
             logger.info("All vaults pods are up and running")
             # check vault status 
             if(not vaultClient.isVaultIntialized()):
-                vaultClient.initializeVault()    
+                vaultClient.initializeVault(vault_key_shares,vault_key_threshold)   
+
             else:
                logger.info('Vault is already Initialized')
             for i in range(0,len(vault_pods)):
                #check if each vault server in the cluster is unsealed
                 if(vaultClient.isVaultSealed("https://"+vault_sts_name+"-"+str(i)+"."+vault_k8s_service_name+"."+namespace+":"+service_port+vault_status_url_path)):
-                   vaultClient.vaultUnseal("https://"+vault_sts_name+"-"+str(i)+"."+vault_k8s_service_name+"."+namespace+":"+service_port+vault_unseal_url_path)
+                   vaultClient.vaultUnseal("https://"+vault_sts_name+"-"+str(i)+"."+vault_k8s_service_name+"."+namespace+":"+service_port+vault_unseal_url_path,vault_key_threshold)
                 else:
                    logger.info(vault_sts_name+"-"+str(i)+" is already unsealed")
     

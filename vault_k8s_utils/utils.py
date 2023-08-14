@@ -48,7 +48,7 @@ class VaultManager:
     status = self.vaultGetSealStatus(vault_url)
     return status['sealed']
 
-  def initializeVault(self,shares=5, threshold=3):
+  def initializeVault(self,shares=1, threshold=1):
     logger.info("Starting to initialize vault...")
     payload = '{"secret_shares" : %d, "secret_threshold" : %d}' % (shares, threshold)
     vault_init_url = "https://"+self.vault_sts_name+"-0"+"."+self.vault_k8s_service_name+"."+self.vault_namespace+":"+self.service_port+vault_init_url_path
@@ -71,7 +71,7 @@ class VaultManager:
       logger.error("ERR: Error connecting to Vault server ")
       exit()
 
-  def vaultUnseal(self,vault_url):
+  def vaultUnseal(self,vault_url,vault_key_threshold):
       if not secret_config.configFileExists():
           logger.error("ERR: Vault config file not found")
           exit()
@@ -79,7 +79,7 @@ class VaultManager:
       config = secret_config.loadVaultConfiguration()
       keys = config['keys']
 
-      threshold = 3
+      threshold = vault_key_threshold
       progress = 0
 
       for i in range(progress, threshold):
