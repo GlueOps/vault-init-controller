@@ -15,7 +15,7 @@ The GlueOps vault init controller project utilizes environment variables to conf
 | `RECONCILE_PERIOD`         | Interval (in minutes) for secret reconciliation.  | `10`                          |
 | `SERVICE_PORT`             | Port number on which Vault service is exposed.    | `8200`                        |
 | `VAULT_S3_BUCKET`          | The s3 bucket to store the vault unseal keys .    | `vault-backend-glueops`       |
-| `VAULT_SECRET_FILE`        | The file path in the s3 bucket.                   | `vault-config.json`           |
+| `VAULT_SECRET_FILE`        | The file path in the s3 bucket.                   | `vault_access.json`           |
 | `PAUSE_RECONCILE  `        | To pause the reconcile of the controller.         | `false`                       |
 | `VAULT_KEY_SHARES  `       | No of keys to be generated.                       | `1`                           |  
 | `VAULT_KEY_THRESHOLD  `    | No of Keys required to unseal vault               | `1`                           |    
