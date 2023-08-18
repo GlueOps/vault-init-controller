@@ -32,24 +32,12 @@ def loadVaultConfiguration():
         if configFileExists():
             obj = s3.get_object(Bucket=bucket_name, Key=file_key)
             json_data = obj['Body'].read().decode('utf-8')
-            #Remove the newline character from the end of the JSON string
-            json_string_cleaned = json_data.strip()
+            try:
+                data = json.loads(json_data)
+            except json.JSONDecodeError as e:
+                print(f"Error parsing JSON: {e}")
 
-            # Split the JSON string by newline characters (if there are multiple JSON objects separated by newlines)
-            json_objects = json_string_cleaned.split("\n")
-
-            # Initialize an empty list to store the parsed JSON objects
-            parsed_data = []
-
-            # Parse each JSON object separately
-            for obj in json_objects:
-                try:
-                    data = json.loads(obj)
-                    parsed_data.append(data)
-                except json.JSONDecodeError as e:
-                    print(f"Error parsing JSON: {e}")
-
-            return json.loads(parsed_data[0])
+            return data
         else:
             return None
         
