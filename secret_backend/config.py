@@ -51,7 +51,7 @@ def saveVaultConfiguration(json_data):
         json_string = json.dumps(json.loads(json_data), indent=2)
         
         # Save the JSON data to S3
-        s3.put_object(Bucket=bucket_name, Key=file_key, Body=json_string)
+        s3.put_object(Bucket=bucket_name, Key=file_key, Body=json_string, ContentType='application/json')
         
     except Exception as e:
         logger.info(f"Error saving vault configuration: {str(e)}")
