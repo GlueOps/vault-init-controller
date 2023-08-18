@@ -12,7 +12,7 @@ The GlueOps vault init controller project utilizes environment variables to conf
 | `VAULT_STS_NAME        `   | The name of the Kubernetes statefulset for Vault. | `vault`                       |
 | `VAULT_LABEL_SELECTOR  `   | The label selector for the vault pods .           | `app.kubernetes.io/name=vault`|
 | `VAULT_K8S_SERVICE_NAME`   | The name of the Kubernetes service for Vault.     | `vault-internal`              |
-| `RECONCILE_PERIOD`         | Interval (in minutes) for secret reconciliation.  | `10`                          |
+| `RECONCILE_PERIOD`         | Interval (in seconds) for secret reconciliation.  | `10`                          |
 | `SERVICE_PORT`             | Port number on which Vault service is exposed.    | `8200`                        |
 | `VAULT_S3_BUCKET`          | The s3 bucket to store the vault unseal keys .    | `vault-backend-glueops`       |
 | `VAULT_SECRET_FILE`        | The file path in the s3 bucket.                   | `vault_access.json`           |
