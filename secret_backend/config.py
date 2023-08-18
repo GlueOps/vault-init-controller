@@ -60,7 +60,7 @@ def loadVaultConfiguration():
 # Function to save the JSON configuration to S3
 def saveVaultConfiguration(json_data):
     try:
-        json_string = json.dumps(json_data, indent=2)
+        json_string = json.dumps(json.loads(json_data), indent=2)
         
         # Save the JSON data to S3
         s3.put_object(Bucket=bucket_name, Key=file_key, Body=json_string)
