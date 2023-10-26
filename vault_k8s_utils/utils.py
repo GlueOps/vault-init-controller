@@ -1,6 +1,9 @@
 import logging
 
-from kubernetes import client, config
+from kubernetes import (
+  client as k8s_client,
+  config as k8s_config
+)
 import requests
 
 from secret_backend import config as secret_config
@@ -21,20 +24,20 @@ class VaultManager:
 
       # setting cluster config
       try:
-          config.load_incluster_config()
+          k8s_config.load_incluster_config()
           logger.info("Loaded incluster kubeconfig")
       except Exception as e:
           logger.warning(f'Error loading in-cluster k8s config: {e}')
           try:
               logger.info('Using local Kubeconfig (not in-cluster)')
-              config.load_kube_config()
+              k8s_config.load_kube_config()
           except Exception:
               logger.exception('Failed to load Kubeconfig from cluster, local file')
   
   def get_vault_pods(self):
       try:
           # Create a Kubernetes API client
-          v1 = client.CoreV1Api()
+          v1 = k8s_client.CoreV1Api()
 
           # Get vault pods in the cluster in the vault namespace
           pods = v1.list_namespaced_pod(self.vault_namespace,label_selector=self.vault_label_selector)
