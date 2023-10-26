@@ -1,8 +1,17 @@
-import time
-import vault_k8s_utils.utils as vault_k8s_utils
-from utils.logging_config import logger
-import warnings
 import os
+import time
+import warnings
+
+from glueops.setup_logging import configure as go_configure_logging
+
+import vault_k8s_utils.utils as vault_k8s_utils
+
+
+# configure logger
+logger = go_configure_logging(
+    name='VAULT_INIT',
+    level=os.getenv('PYTHON_LOG_LEVEL', 'INFO')
+)
 
  # To ignore https warnings
 warnings.filterwarnings("ignore")

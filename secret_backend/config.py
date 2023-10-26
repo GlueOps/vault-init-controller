@@ -1,7 +1,13 @@
-import boto3
-import json 
-from utils.logging_config import logger
+import json
+import logging
 import os 
+
+import boto3
+
+
+#init child logger
+logger = logging.getLogger('VAULT_INIT.config')
+
 
 # Replace this with your bucket name
 bucket_name = os.getenv("VAULT_S3_BUCKET", "vault-backend-glueops")
