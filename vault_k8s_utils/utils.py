@@ -1,30 +1,35 @@
+import logging
+
 from kubernetes import client, config
 import requests
-from utils.logging_config import logger
+
 from secret_backend import config as secret_config
 
-# setting cluster config
-try:
-    config.load_incluster_config()
-    logger.info("Loaded incluster kubeconfig")
-except Exception as e:
-    logger.warning(f'Error loading in-cluster k8s config: {e}')
-    try:
-        logger.info('Using local Kubeconfig (not in-cluster)')
-        config.load_kube_config()
-    except Exception:
-        logger.exception('Failed to load Kubeconfig from cluster, local file')
 
-vault_init_url_path = '/v1/sys/init' 
+#init child logger
+logger = logging.getLogger('VAULT_INIT.utils')
 
 class VaultManager:
 
   def __init__(self,vault_namespace,vault_sts_name,vault_k8s_service_name,service_port,vault_label_selector):
-     self.vault_namespace = vault_namespace
-     self.vault_k8s_service_name = vault_k8s_service_name
-     self.service_port = service_port
-     self.vault_sts_name = vault_sts_name
-     self.vault_label_selector = vault_label_selector
+      self.vault_namespace = vault_namespace
+      self.vault_k8s_service_name = vault_k8s_service_name
+      self.service_port = service_port
+      self.vault_sts_name = vault_sts_name
+      self.vault_label_selector = vault_label_selector
+      self.vault_init_url_path = '/v1/sys/init'
+
+      # setting cluster config
+      try:
+          config.load_incluster_config()
+          logger.info("Loaded incluster kubeconfig")
+      except Exception as e:
+          logger.warning(f'Error loading in-cluster k8s config: {e}')
+          try:
+              logger.info('Using local Kubeconfig (not in-cluster)')
+              config.load_kube_config()
+          except Exception:
+              logger.exception('Failed to load Kubeconfig from cluster, local file')
   
   def get_vault_pods(self):
       try:
@@ -40,7 +45,7 @@ class VaultManager:
           return []
 
   def isVaultIntialized(self):
-      vault_init_url = "https://"+self.vault_sts_name+"-0"+"."+self.vault_k8s_service_name+"."+self.vault_namespace+":"+self.service_port+vault_init_url_path
+      vault_init_url = "https://"+self.vault_sts_name+"-0"+"."+self.vault_k8s_service_name+"."+self.vault_namespace+":"+self.service_port+self.vault_init_url_path
       response = requests.get(vault_init_url,verify=False)
       return response.json()['initialized']
 
@@ -51,7 +56,7 @@ class VaultManager:
   def initializeVault(self,shares=1, threshold=1):
     logger.info("Starting to initialize vault...")
     payload = '{"secret_shares" : %d, "secret_threshold" : %d}' % (shares, threshold)
-    vault_init_url = "https://"+self.vault_sts_name+"-0"+"."+self.vault_k8s_service_name+"."+self.vault_namespace+":"+self.service_port+vault_init_url_path
+    vault_init_url = "https://"+self.vault_sts_name+"-0"+"."+self.vault_k8s_service_name+"."+self.vault_namespace+":"+self.service_port+self.vault_init_url_path
     if(secret_config.bucketExists):
       try:
         r = requests.put(vault_init_url, data=payload,verify=False)
