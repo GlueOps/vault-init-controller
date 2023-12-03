@@ -5,7 +5,7 @@ import warnings
 from glueops.setup_logging import configure as go_configure_logging
 
 import vault_k8s_utils.utils as vault_k8s_utils
-
+import secret_backend.config as secret_config
 
 # configure logger
 logger = go_configure_logging(
@@ -32,7 +32,9 @@ if __name__ == "__main__":
     pause_reconcile = os.getenv("PAUSE_RECONCILE","false")
     vault_key_shares = int(os.getenv("VAULT_KEY_SHARES","1"))
     vault_key_threshold = int(os.getenv("VAULT_KEY_THRESHOLD","1"))
-    
+    file_key = os.getenv("VAULT_SECRET_FILE", "vault_access.json")
+    restore_enabled = os.getenv("ENABLE_RESTORE","false")
+
     vaultClient = vault_k8s_utils.VaultManager(namespace,vault_sts_name,vault_k8s_service_name,service_port,vault_label_selector)
 
     # Start the control loop to watch the vault pods
@@ -65,18 +67,39 @@ if __name__ == "__main__":
             continue
         else: 
             logger.info("All vaults pods are up and running")
+            backup_found = False
+            backup_restored = False
             # check vault status 
             if(not vaultClient.isVaultIntialized()):
-                vaultClient.initializeVault(vault_key_shares,vault_key_threshold)   
+                # Check if a backup already exists, if yes restore
+                latest_backup = secret_config.getLatestBackupfromS3()
+                config_file_exist = secret_config.configFileExists()
+                if restore_enabled=="true" and latest_backup and config_file_exist:
+                    backup_found = True
+                    logger.info("Backup found, intializing vault...")
+                    temp_file_name = secret_config.file_key.replace("vault_access.json","vault_access_temp.json")
+                    vaultClient.initializeVault(vault_key_shares,vault_key_threshold,temp_file_name)
+                else:
+                    logger.info("Backup or keys doesn't exist, initializing vault from scratch..")
+                    vaultClient.initializeVault(vault_key_shares,vault_key_threshold,file_key)   
 
             else:
                logger.info('Vault is already Initialized')
+            
+            secret_file  = file_key
+            if restore_enabled=="true" and backup_found and not backup_restored:
+                secret_file = file_key.replace("vault_access.json","vault_access_temp.json")
+                
             for i in range(0,len(vault_pods)):
                #check if each vault server in the cluster is unsealed
                 if(vaultClient.isVaultSealed("https://"+vault_sts_name+"-"+str(i)+"."+vault_k8s_service_name+"."+namespace+":"+service_port+vault_status_url_path)):
-                   vaultClient.vaultUnseal("https://"+vault_sts_name+"-"+str(i)+"."+vault_k8s_service_name+"."+namespace+":"+service_port+vault_unseal_url_path,vault_key_threshold)
+                   vaultClient.vaultUnseal("https://"+vault_sts_name+"-"+str(i)+"."+vault_k8s_service_name+"."+namespace+":"+service_port+vault_unseal_url_path,vault_key_threshold,secret_file)
                 else:
                    logger.info(vault_sts_name+"-"+str(i)+" is already unsealed")
+
+            if restore_enabled=="true" and backup_found and not backup_restored:
+                vaultClient.restoreVaultfromS3(latest_backup)
+                backup_restored = True
     
         if(vaultClient.vaultHealthCheck() != None):
             logger.info("Vault cluster is up and running")
