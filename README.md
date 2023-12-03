@@ -1,6 +1,6 @@
 ## Vault init controller
 
-#### A controller that watches for vault pods and unseals the vault server 
+#### A controller that watches for vault pods and unseals the vault server and also restores a backup if already present for a tenant.
 
 ## Configuration
 
@@ -18,7 +18,8 @@ The GlueOps vault init controller project utilizes environment variables to conf
 | `VAULT_SECRET_FILE`        | The file path in the s3 bucket.                   | `vault_access.json`           |
 | `PAUSE_RECONCILE  `        | To pause the reconcile of the controller.         | `false`                       |
 | `VAULT_KEY_SHARES  `       | No of keys to be generated.                       | `1`                           |  
-| `VAULT_KEY_THRESHOLD  `    | No of Keys required to unseal vault               | `1`                           |    
+| `VAULT_KEY_THRESHOLD  `    | No of Keys required to unseal vault               | `1`                           | 
+| `ENABLE RESTORE  `         | Start vault with already available backup         | `false`                       |    
 
 ## Prerequisite
 
