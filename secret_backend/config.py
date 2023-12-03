@@ -1,7 +1,6 @@
 import json
 import logging
 import os 
-
 import boto3
 
 
@@ -20,23 +19,21 @@ s3 = boto3.client('s3')
 def configFileExists():
     try:
         # Check if the file exists in the bucket
-        response = s3.list_objects_v2(Bucket=bucket_name, Prefix=file_key)
-        
+        response = s3.list_objects_v2(Bucket=bucket_name, Prefix=file_key)     
         if 'Contents' in response:
             return True
         else:
             return False
-        
     except Exception as e:
         logger.info(f"Error checking if config file exists: {str(e)}")
         return False
 
 # Function to load the JSON configuration from S3
-def loadVaultConfiguration():
+def loadVaultConfiguration(file_name):
     try:
         # Check if the file exists before proceeding to read
         if configFileExists():
-            obj = s3.get_object(Bucket=bucket_name, Key=file_key)
+            obj = s3.get_object(Bucket=bucket_name, Key=file_name)
             json_data = obj['Body'].read().decode('utf-8')
             try:
                 data = json.loads(json_data)
@@ -45,25 +42,21 @@ def loadVaultConfiguration():
 
             return data
         else:
-            return None
-        
+            return None    
     except Exception as e:
         logger.info(f"Error loading vault configuration: {str(e)}")
         return None
 
 # Function to save the JSON configuration to S3
-def saveVaultConfiguration(json_data):
+def saveVaultConfiguration(json_data, secret_file_name):
     try:
         json_string = json.dumps(json.loads(json_data), indent=2)
-        
         # Save the JSON data to S3
-        s3.put_object(Bucket=bucket_name, Key=file_key, Body=json_string, ContentType='application/json')
-        
+        s3.put_object(Bucket=bucket_name, Key=secret_file_name, Body=json_string, ContentType='application/json')  
     except Exception as e:
         logger.info(f"Error saving vault configuration: {str(e)}")
 
 # Check if the bucket exists
-
 def bucketExists(bucket_name):
     try:
         s3.head_bucket(Bucket=bucket_name)
@@ -75,3 +68,16 @@ def bucketExists(bucket_name):
         else:
             logger.info(f"Error checking if the bucket exists: {str(e)}")
             return False
+
+def getLatestBackupfromS3():
+    try:
+        response = s3.list_objects_v2(Bucket=bucket_name)  
+        snap_objects = [obj['Key'] for obj in response.get('Contents', []) if obj['Key'].endswith(".snap")]
+        if not snap_objects:
+            logger.info("No backups were found")
+            return None 
+        latest_snap_object = max(snap_objects, key=lambda obj: s3.head_object(Bucket=bucket_name, Key=obj)['LastModified'])
+        return latest_snap_object
+    except Exception as e:
+        logger.info(f"Error checking backup in s3: {str(e)}")
+        return None 

@@ -5,7 +5,6 @@ from kubernetes import (
   config as k8s_config
 )
 import requests
-
 from secret_backend import config as secret_config
 
 
@@ -56,14 +55,14 @@ class VaultManager:
     status = self.vaultGetSealStatus(vault_url)
     return status['sealed']
 
-  def initializeVault(self,shares=1, threshold=1):
+  def initializeVault(self,shares=1, threshold=1, secret_file_name="vault_access.json"):
     logger.info("Starting to initialize vault...")
     payload = '{"secret_shares" : %d, "secret_threshold" : %d}' % (shares, threshold)
     vault_init_url = "https://"+self.vault_sts_name+"-0"+"."+self.vault_k8s_service_name+"."+self.vault_namespace+":"+self.service_port+self.vault_init_url_path
     if(secret_config.bucketExists):
       try:
         r = requests.put(vault_init_url, data=payload,verify=False)
-        secret_config.saveVaultConfiguration(r.text)
+        secret_config.saveVaultConfiguration(r.text, secret_file_name)
         return r.json()
       except (requests.exceptions.ConnectionError, requests.exceptions.Timeout):
         logger.error("ERR: Error connecting to Vault server")
@@ -79,12 +78,12 @@ class VaultManager:
       logger.error("ERR: Error connecting to Vault server ")
       exit()
 
-  def vaultUnseal(self,vault_url,vault_key_threshold):
+  def vaultUnseal(self,vault_url,vault_key_threshold,secret_file):
       if not secret_config.configFileExists():
           logger.error("ERR: Vault config file not found")
           exit()
 
-      config = secret_config.loadVaultConfiguration()
+      config = secret_config.loadVaultConfiguration(secret_file)
       keys = config['keys']
 
       threshold = vault_key_threshold
@@ -94,6 +93,9 @@ class VaultManager:
           payload = '{"key" : "%s"}' % (keys[i])
           try:
               r = requests.put(vault_url, data=payload,verify=False)
+              # logger.info(r.text)
+              # if(r.status_code == 400):
+              #    logger.error("Unsealing with wrong keys")
           except (requests.exceptions.ConnectionError, requests.exceptions.Timeout):
               logger.error("ERR: Error connecting to Vault server")
 
@@ -113,3 +115,23 @@ class VaultManager:
     except requests.exceptions.RequestException as e:
         logger.error("Error occurred:", e)
         return None
+
+  def restoreVaultfromS3(self, latest_backup):
+    try:
+        logger.info("Downloading vault backup from s3...")
+        response = secret_config.s3.get_object(Bucket=secret_config.bucket_name, Key=latest_backup)
+        logger.info("Backup content lenght: "+str(response['ContentLength']))
+        temp_file_name = secret_config.file_key.replace("vault_access.json","vault_access_temp.json")
+        data = secret_config.loadVaultConfiguration(temp_file_name)
+        vault_token = data['root_token']
+        headers = {
+            'X-Vault-Token': vault_token
+        }
+        restore_url = "https://"+self.vault_sts_name+"-0"+"."+self.vault_k8s_service_name+"."+self.vault_namespace+":"+self.service_port+"/v1/sys/storage/raft/snapshot-force"
+        logger.info("Restoring vault backup "+latest_backup)
+        res = requests.put(restore_url, headers=headers, data=response['Body'], verify=False)
+        logger.info(res.text)
+        if res.status_code == 204:
+          logger.info("Existing backup was restored successfully")
+    except Exception as e:
+        logger.error("Error occurred:", e)
