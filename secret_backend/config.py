@@ -71,12 +71,14 @@ def bucketExists(bucket_name):
 
 def getLatestBackupfromS3():
     try:
-        response = s3.list_objects_v2(Bucket=bucket_name)  
-        snap_objects = [obj['Key'] for obj in response.get('Contents', []) if obj['Key'].endswith(".snap")]
-        if not snap_objects:
-            logger.info("No backups were found")
-            return None 
-        latest_snap_object = max(snap_objects, key=lambda obj: s3.head_object(Bucket=bucket_name, Key=obj)['LastModified'])
+        paginator = s3.get_paginator('list_objects_v2')
+        page_iterator = paginator.paginate(Bucket=bucket_name)
+        latest_snap_object = None
+        for page in page_iterator:
+            if "Contents" in page:
+               snap_objects = [obj for obj in page['Contents'] if obj['Key'].endswith('.snap')]
+               if snap_objects:
+                latest_snap_object = max(snap_objects, key=lambda obj: s3.head_object(Bucket=bucket_name, Key=obj)['LastModified']) 
         return latest_snap_object
     except Exception as e:
         logger.info(f"Error checking backup in s3: {str(e)}")
