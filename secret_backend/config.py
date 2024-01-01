@@ -74,7 +74,7 @@ def bucketExists(bucket_name):
 def getLatestBackupfromS3():
     try:
         paginator = s3.get_paginator('list_objects_v2')
-        page_iterator = paginator.paginate(Bucket=bucket_name,prefix=captain_domain+"/"+backup_prefix)
+        page_iterator = paginator.paginate(Bucket=bucket_name,Prefix=captain_domain+"/"+backup_prefix)
         latest_snap_object = None
         for page in page_iterator:
             if "Contents" in page:
