@@ -78,7 +78,10 @@ def getLatestBackupfromS3():
             if "Contents" in page:
                snap_objects = [obj for obj in page['Contents'] if obj['Key'].endswith('.snap')]
                if snap_objects:
-                latest_snap_object = max(snap_objects, key=lambda obj: s3.head_object(Bucket=bucket_name, Key=obj)['LastModified']) 
+                current_latest_snap_object = max(snap_objects, key=lambda obj: obj['LastModified']) 
+                if (latest_snap_object is None or 
+                    current_latest_snap_object['LastModified'] > latest_snap_object['LastModified']):
+                    latest_snap_object = current_latest_snap_object
         return latest_snap_object
     except Exception as e:
         logger.info(f"Error checking backup in s3: {str(e)}")
