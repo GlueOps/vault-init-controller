@@ -11,6 +11,8 @@ logger = logging.getLogger('VAULT_INIT.config')
 # Replace this with your bucket name
 bucket_name = os.getenv("VAULT_S3_BUCKET", "vault-backend-glueops")
 file_key = os.getenv("VAULT_SECRET_FILE", "vault_access.json")
+captain_domain = os.getenv("CAPTAIN_DOMAIN")
+backup_prefix = os.getenv("BACKUP_PREFIX")
 
 # Create a global S3 client
 s3 = boto3.client('s3')
@@ -72,7 +74,7 @@ def bucketExists(bucket_name):
 def getLatestBackupfromS3():
     try:
         paginator = s3.get_paginator('list_objects_v2')
-        page_iterator = paginator.paginate(Bucket=bucket_name)
+        page_iterator = paginator.paginate(Bucket=bucket_name,prefix=captain_domain+"/"+backup_prefix)
         latest_snap_object = None
         for page in page_iterator:
             if "Contents" in page:
