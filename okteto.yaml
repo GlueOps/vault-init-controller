@@ -3,7 +3,7 @@ autocreate: true
 image: okteto/python:3
 command: ["/bin/sh"]
 workdir: /app
-context: kind-kind
+context: k3d-captain
 namespace: glueops-core-vault
 serviceAccount: vault-init-controller
 securityContext:

@@ -98,7 +98,7 @@ if __name__ == "__main__":
                    logger.info(vault_sts_name+"-"+str(i)+" is already unsealed")
 
             if restore_enabled=="true" and backup_found and not backup_restored:
-                vaultClient.restoreVaultfromS3(latest_backup)
+                vaultClient.restoreVaultfromS3(latest_backup['Key'])
                 backup_restored = True
     
         if(vaultClient.vaultHealthCheck() != None):

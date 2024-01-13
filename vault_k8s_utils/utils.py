@@ -88,7 +88,7 @@ class VaultManager:
 
       threshold = vault_key_threshold
       progress = 0
-
+      logger.info("Unsealing "+vault_url.split('https://')[1].split('.')[0])
       for i in range(progress, threshold):
           payload = '{"key" : "%s"}' % (keys[i])
           try:
@@ -130,7 +130,6 @@ class VaultManager:
         restore_url = "https://"+self.vault_sts_name+"-0"+"."+self.vault_k8s_service_name+"."+self.vault_namespace+":"+self.service_port+"/v1/sys/storage/raft/snapshot-force"
         logger.info("Restoring vault backup "+latest_backup)
         res = requests.put(restore_url, headers=headers, data=response['Body'], verify=False)
-        logger.info(res.text)
         if res.status_code == 204:
           logger.info("Existing backup was restored successfully")
     except Exception as e:
