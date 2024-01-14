@@ -20,7 +20,7 @@ The GlueOps vault init controller project utilizes environment variables to conf
 | `VAULT_KEY_SHARES  `       | No of keys to be generated.                       | `1`                           |  
 | `VAULT_KEY_THRESHOLD  `    | No of Keys required to unseal vault               | `1`                           | 
 | `ENABLE_RESTORE  `         | Start vault with already available backup         | `false`                       |  
-| `CAPTAIN_DOMAIN  `         | Glueops captain domain which is the bucket name    | `None`                        |
+| `CAPTAIN_DOMAIN  `         | Glueops captain domain which is the bucket name   | `None`                        |
 | `BACKUP_PREFIX  `          | backup prefix path after the bucket_name.         | `hashicorp-vault-backups`     |  
 
 ## Prerequisite
