@@ -12,7 +12,7 @@ logger = logging.getLogger('VAULT_INIT.config')
 bucket_name = os.getenv("VAULT_S3_BUCKET", "vault-backend-glueops")
 file_key = os.getenv("VAULT_SECRET_FILE", "vault_access.json")
 captain_domain = os.getenv("CAPTAIN_DOMAIN")
-backup_prefix = os.getenv("BACKUP_PREFIX")
+backup_prefix = os.getenv("BACKUP_PREFIX","hashicorp-vault-backups")
 
 # Create a global S3 client
 s3 = boto3.client('s3')

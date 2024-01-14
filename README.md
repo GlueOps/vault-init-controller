@@ -19,7 +19,9 @@ The GlueOps vault init controller project utilizes environment variables to conf
 | `PAUSE_RECONCILE  `        | To pause the reconcile of the controller.         | `false`                       |
 | `VAULT_KEY_SHARES  `       | No of keys to be generated.                       | `1`                           |  
 | `VAULT_KEY_THRESHOLD  `    | No of Keys required to unseal vault               | `1`                           | 
-| `ENABLE_RESTORE  `         | Start vault with already available backup         | `false`                       |    
+| `ENABLE_RESTORE  `         | Start vault with already available backup         | `false`                       |  
+| `CAPTAIN_DOMAIN  `         | Glueops captain domain which is thebucket name    | `None`                        |
+| `BACKUP_PREFIX  `          | backup prefix path after the bucket_name.         | `hashicorp-vault-backups`     |  
 
 ## Prerequisite
 
