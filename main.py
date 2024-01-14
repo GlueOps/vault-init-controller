@@ -80,7 +80,10 @@ if __name__ == "__main__":
                     temp_file_name = secret_config.file_key.replace("vault_access.json","vault_access_temp.json")
                     vaultClient.initializeVault(vault_key_shares,vault_key_threshold,temp_file_name)
                 else:
-                    logger.info("Backup or keys doesn't exist, initializing vault from scratch..")
+                    if(restore_enabled=="false"):   
+                        logger.info("Vault restore disabled, initializing vault from scratch..")
+                    else:
+                        logger.info("Backup or keys doesn't exist, initializing vault from scratch..")
                     vaultClient.initializeVault(vault_key_shares,vault_key_threshold,file_key)   
 
             else:
