@@ -11,6 +11,8 @@ logger = logging.getLogger('VAULT_INIT.config')
 # Replace this with your bucket name
 bucket_name = os.getenv("VAULT_S3_BUCKET", "vault-backend-glueops")
 file_key = os.getenv("VAULT_SECRET_FILE", "vault_access.json")
+captain_domain = os.getenv("CAPTAIN_DOMAIN")
+backup_prefix = os.getenv("BACKUP_PREFIX","hashicorp-vault-backups")
 
 # Create a global S3 client
 s3 = boto3.client('s3')
@@ -71,12 +73,17 @@ def bucketExists(bucket_name):
 
 def getLatestBackupfromS3():
     try:
-        response = s3.list_objects_v2(Bucket=bucket_name)  
-        snap_objects = [obj['Key'] for obj in response.get('Contents', []) if obj['Key'].endswith(".snap")]
-        if not snap_objects:
-            logger.info("No backups were found")
-            return None 
-        latest_snap_object = max(snap_objects, key=lambda obj: s3.head_object(Bucket=bucket_name, Key=obj)['LastModified'])
+        paginator = s3.get_paginator('list_objects_v2')
+        page_iterator = paginator.paginate(Bucket=bucket_name,Prefix=captain_domain+"/"+backup_prefix)
+        latest_snap_object = None
+        for page in page_iterator:
+            if "Contents" in page:
+               snap_objects = [obj for obj in page['Contents'] if obj['Key'].endswith('.snap')]
+               if snap_objects:
+                current_latest_snap_object = max(snap_objects, key=lambda obj: obj['LastModified']) 
+                if (latest_snap_object is None or 
+                    current_latest_snap_object['LastModified'] > latest_snap_object['LastModified']):
+                    latest_snap_object = current_latest_snap_object
         return latest_snap_object
     except Exception as e:
         logger.info(f"Error checking backup in s3: {str(e)}")

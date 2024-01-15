@@ -80,7 +80,10 @@ if __name__ == "__main__":
                     temp_file_name = secret_config.file_key.replace("vault_access.json","vault_access_temp.json")
                     vaultClient.initializeVault(vault_key_shares,vault_key_threshold,temp_file_name)
                 else:
-                    logger.info("Backup or keys doesn't exist, initializing vault from scratch..")
+                    if(restore_enabled=="false"):   
+                        logger.info("Vault restore disabled, initializing vault from scratch..")
+                    else:
+                        logger.info("Backup or keys doesn't exist, initializing vault from scratch..")
                     vaultClient.initializeVault(vault_key_shares,vault_key_threshold,file_key)   
 
             else:
@@ -98,7 +101,7 @@ if __name__ == "__main__":
                    logger.info(vault_sts_name+"-"+str(i)+" is already unsealed")
 
             if restore_enabled=="true" and backup_found and not backup_restored:
-                vaultClient.restoreVaultfromS3(latest_backup)
+                vaultClient.restoreVaultfromS3(latest_backup['Key'])
                 backup_restored = True
     
         if(vaultClient.vaultHealthCheck() != None):
