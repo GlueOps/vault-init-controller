@@ -1,6 +1,6 @@
 name: vault-init-debug
 autocreate: true 
-image: okteto/python:3@sha256:2a2c93bd75864fec62a759e3cbb50530618016585fdd9e71fa0b9a45eed2268d
+image: okteto/python:3@sha256:cbe0c5b7ecb6587eb07b46377a888bec54133fd42b5450c06312ed2ef3f38d28
 command: ["/bin/sh"]
 workdir: /app
 context: k3d-captain
