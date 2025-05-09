@@ -81,19 +81,19 @@ def getLatestBackupfromS3():
                 for obj in page['Contents']:
                     response = client.get_object_tagging(
                         Bucket=bucket_name,
-                        Key=f"{captain_domain}/{backup_prefix}/{obj}",
+                        Key=f"{captain_domain}/{backup_prefix}/{obj['Key']}",
                     )
                     obj_date = datetime.fromisoformat(response['TagSet'][1]['value'])
                     obj_level = response['TagSet'][0]['value']
                     # if the obj have a primary tag we should use it  
-                    if obj_level == "primary":
+                    if obj_level.lower() == "primary":
                         return obj
 
                     if obj['Key'].endswith('.snap') and (not latest_snap_object or datetime.fromisoformat(latest_snap_object['date']) < obj_date):
                         latest_snap_object['date'] = obj_date.isoformat()
                         latest_snap_object['obj'] = obj
                     
-        return latest_snap_object
+        return latest_snap_object['obj']
     except Exception as e:
         logger.info(f"Error checking backup in s3: {str(e)}")
         return None 
