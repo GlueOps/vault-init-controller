@@ -2,7 +2,7 @@ import json
 import logging
 import os 
 import boto3
-
+from datetime import datetime
 
 #init child logger
 logger = logging.getLogger('VAULT_INIT.config')
@@ -75,15 +75,24 @@ def getLatestBackupfromS3():
     try:
         paginator = s3.get_paginator('list_objects_v2')
         page_iterator = paginator.paginate(Bucket=bucket_name,Prefix=captain_domain+"/"+backup_prefix)
-        latest_snap_object = None
+        latest_snap_object = {}
         for page in page_iterator:
             if "Contents" in page:
-               snap_objects = [obj for obj in page['Contents'] if obj['Key'].endswith('.snap')]
-               if snap_objects:
-                current_latest_snap_object = max(snap_objects, key=lambda obj: obj['LastModified']) 
-                if (latest_snap_object is None or 
-                    current_latest_snap_object['LastModified'] > latest_snap_object['LastModified']):
-                    latest_snap_object = current_latest_snap_object
+                for obj in page['Contents']:
+                    response = client.get_object_tagging(
+                        Bucket=bucket_name,
+                        Key=f"{captain_domain}/{backup_prefix}/{obj}",
+                    )
+                    obj_date = datetime.fromisoformat(response['TagSet'][1]['value'])
+                    obj_level = response['TagSet'][0]['value']
+                    # if the obj have a primary tag we should use it  
+                    if obj_level == "primary":
+                        return obj
+
+                    if obj['Key'].endswith('.snap') and (not latest_snap_object or datetime.fromisoformat(latest_snap_object['date']) < obj_date):
+                        latest_snap_object['date'] = obj_date.isoformat()
+                        latest_snap_object['obj'] = obj
+                    
         return latest_snap_object
     except Exception as e:
         logger.info(f"Error checking backup in s3: {str(e)}")
