@@ -83,10 +83,15 @@ def getLatestBackupfromS3():
                         Bucket=bucket_name,
                         Key=f"{captain_domain}/{backup_prefix}/{obj['Key']}",
                     )
-                    obj_date = datetime.fromisoformat(response['TagSet'][1]['value'])
-                    obj_level = response['TagSet'][0]['value']
+                    if response['TagSet'][0]['key'] == "level":
+                        obj_level = response['TagSet'][0]['value']
+                        obj_date = datetime.fromisoformat(response['TagSet'][1]['value'])
+                    else:
+                        obj_level = response['TagSet'][1]['value']
+                        obj_date = datetime.fromisoformat(response['TagSet'][0]['value'])
+
                     # if the obj have a primary tag we should use it  
-                    if obj_level.lower() == "primary":
+                    if obj['Key'].endswith('.snap') and obj_level.lower() == "primary":
                         return obj
 
                     if obj['Key'].endswith('.snap') and (not latest_snap_object or datetime.fromisoformat(latest_snap_object['date']) < obj_date):
