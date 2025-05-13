@@ -13,7 +13,7 @@ bucket_name = os.getenv("VAULT_S3_BUCKET", "vault-backend-glueops")
 file_key = os.getenv("VAULT_SECRET_FILE", "vault_access.json")
 captain_domain = os.getenv("CAPTAIN_DOMAIN")
 backup_prefix = os.getenv("BACKUP_PREFIX","hashicorp-vault-backups")
-
+restore_this_backup = os.getenv("RESTORE_THIS_BACKUP")
 # Create a global S3 client
 s3 = boto3.client('s3')
 
@@ -83,19 +83,17 @@ def getLatestBackupfromS3():
                         Bucket=bucket_name,
                         Key=f"{captain_domain}/{backup_prefix}/{obj['Key']}",
                     )
-                    if response['TagSet'][0]['key'] == "level":
-                        obj_level = response['TagSet'][0]['value']
-                        obj_date = datetime.fromisoformat(response['TagSet'][1]['value'])
-                    else:
-                        obj_level = response['TagSet'][1]['value']
-                        obj_date = datetime.fromisoformat(response['TagSet'][0]['value'])
-
+                    for tag in response['TagSet']:
+                        if tag['Key'] == "datetime":
+                            obj_date = datetime.fromisoformat(tag['Value'])
+                            break
+                    
                     # if the obj have a primary tag we should use it  
-                    if obj['Key'].endswith('.snap') and obj_level.lower() == "primary":
+                    if obj['Key'].endswith('.snap') and obj['Key'] == restore_this_backup:
                         return obj
 
-                    if obj['Key'].endswith('.snap') and (not latest_snap_object or datetime.fromisoformat(latest_snap_object['date']) < obj_date):
-                        latest_snap_object['date'] = obj_date.isoformat()
+                    if obj['Key'].endswith('.snap') and (not latest_snap_object or latest_snap_object['date'] < obj_date):
+                        latest_snap_object['date'] = obj_date
                         latest_snap_object['obj'] = obj
                     
         return latest_snap_object['obj']
