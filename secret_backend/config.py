@@ -95,7 +95,7 @@ def getLatestBackupfromS3():
                         latest_snap_object['date'] = obj_date
                         latest_snap_object['obj'] = obj
                     
-        return latest_snap_object['obj']
+        return latest_snap_object.get("obj",None)
     except Exception as e:
         logger.info(f"Error checking backup in s3: {str(e)}")
         return None 
