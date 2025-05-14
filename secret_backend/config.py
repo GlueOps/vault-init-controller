@@ -84,7 +84,7 @@ def getLatestBackupfromS3():
                         Key=f"{captain_domain}/{backup_prefix}/{obj['Key']}",
                     )
                     for tag in response['TagSet']:
-                        if tag['Key'] == "datetime":
+                        if tag['Key'] == "datetime_created":
                             obj_date = datetime.fromisoformat(tag['Value'])
                             break
                     
