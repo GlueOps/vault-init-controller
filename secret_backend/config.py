@@ -79,18 +79,17 @@ def getLatestBackupfromS3():
         for page in page_iterator:
             if "Contents" in page:
                 for obj in page['Contents']:
-                    response = client.get_object_tagging(
+                    response = s3.get_object_tagging(
                         Bucket=bucket_name,
-                        Key=f"{captain_domain}/{backup_prefix}/{obj['Key']}",
+                        Key=obj['Key'],
                     )
                     for tag in response['TagSet']:
                         if tag['Key'] == "datetime_created":
                             obj_date = datetime.fromisoformat(tag['Value'])
                             break
-                    
-                    if obj['Key'].endswith('.snap') and obj['Key'] == restore_this_backup:
+                    if obj['Key'].endswith('.snap') and os.path.basename(obj['Key']) == restore_this_backup:
+                        logger.info(f"Restoring this backup: {restore_this_backup}")
                         return obj
-
                     if obj['Key'].endswith('.snap') and (not latest_snap_object or latest_snap_object['date'] < obj_date):
                         latest_snap_object['date'] = obj_date
                         latest_snap_object['obj'] = obj
