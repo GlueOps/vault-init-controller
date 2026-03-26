@@ -1,8 +1,12 @@
 import json
 import logging
-import os 
+import os
 import boto3
-from datetime import datetime
+
+
+class BackupNotFoundError(Exception):
+    pass
+
 
 #init child logger
 logger = logging.getLogger('VAULT_INIT.config')
@@ -27,8 +31,8 @@ def configFileExists():
         else:
             return False
     except Exception as e:
-        logger.info(f"Error checking if config file exists: {str(e)}")
-        return False
+        logger.error(f"Error checking if config file exists: {str(e)}")
+        raise
 
 # Function to load the JSON configuration from S3
 def loadVaultConfiguration(file_name):
@@ -39,14 +43,15 @@ def loadVaultConfiguration(file_name):
             json_data = obj['Body'].read().decode('utf-8')
             try:
                 data = json.loads(json_data)
-            except json.JSONDecodeError as e:
-                print(f"Error parsing JSON: {e}")
+            except json.JSONDecodeError:
+                logger.error("Vault configuration file contains invalid JSON")
+                raise ValueError("Vault configuration file contains invalid JSON")
 
             return data
         else:
             return None    
     except Exception as e:
-        logger.info(f"Error loading vault configuration: {str(e)}")
+        logger.error(f"Error loading vault configuration: {str(e)}")
         return None
 
 # Function to save the JSON configuration to S3
@@ -56,7 +61,8 @@ def saveVaultConfiguration(json_data, secret_file_name):
         # Save the JSON data to S3
         s3.put_object(Bucket=bucket_name, Key=secret_file_name, Body=json_string, ContentType='application/json')  
     except Exception as e:
-        logger.info(f"Error saving vault configuration: {str(e)}")
+        logger.error(f"Error saving vault configuration: {str(e)}")
+        raise
 
 # Check if the bucket exists
 def bucketExists(bucket_name):
@@ -68,33 +74,35 @@ def bucketExists(bucket_name):
         if '404' in str(e):
             return False
         else:
-            logger.info(f"Error checking if the bucket exists: {str(e)}")
+            logger.error(f"Error checking if the bucket exists: {str(e)}")
             return False
 
 def getLatestBackupfromS3():
     try:
         paginator = s3.get_paginator('list_objects_v2')
         page_iterator = paginator.paginate(Bucket=bucket_name,Prefix=captain_domain+"/"+backup_prefix)
-        latest_snap_object = {}
+        latest_snap = None
         for page in page_iterator:
             if "Contents" in page:
                 for obj in page['Contents']:
-                    response = s3.get_object_tagging(
-                        Bucket=bucket_name,
-                        Key=obj['Key'],
-                    )
-                    for tag in response['TagSet']:
-                        if tag['Key'] == "datetime_created":
-                            obj_date = datetime.fromisoformat(tag['Value'])
-                            break
-                    if obj['Key'].endswith('.snap') and os.path.basename(obj['Key']) == restore_this_backup:
+                    if not obj['Key'].endswith('.snap'):
+                        continue
+                    if restore_this_backup and os.path.basename(obj['Key']) == restore_this_backup:
                         logger.info(f"Restoring this backup: {restore_this_backup}")
                         return obj
-                    if obj['Key'].endswith('.snap') and (not latest_snap_object or latest_snap_object['date'] < obj_date):
-                        latest_snap_object['date'] = obj_date
-                        latest_snap_object['obj'] = obj
-                    
-        return latest_snap_object.get("obj",None)
+                    latest_snap = obj
+
+        if restore_this_backup:
+            raise BackupNotFoundError(f"RESTORE_THIS_BACKUP is set to '{restore_this_backup}' but no matching backup was found in S3")
+
+        if latest_snap:
+            logger.info(f"Latest backup found: {latest_snap['Key']}")
+        else:
+            logger.info("No .snap backups found in S3")
+
+        return latest_snap
+    except BackupNotFoundError:
+        raise
     except Exception as e:
-        logger.info(f"Error checking backup in s3: {str(e)}")
-        return None 
+        logger.error(f"Error checking backup in s3: {str(e)}")
+        raise
