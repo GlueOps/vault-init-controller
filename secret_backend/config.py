@@ -114,7 +114,7 @@ def getLatestBackupfromS3():
 
 
 def _findSpecificBackup(paginator):
-    page_iterator = paginator.paginate(Bucket=bucket_name, Prefix=captain_domain + "/" + backup_prefix)
+    page_iterator = paginator.paginate(Bucket=bucket_name, Prefix=captain_domain + "/" + backup_prefix + "/")
     for page in page_iterator:
         if "Contents" in page:
             for obj in page['Contents']:

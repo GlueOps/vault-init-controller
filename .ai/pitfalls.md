@@ -6,7 +6,7 @@
 
 ## Asymmetric error handling in loadVaultConfiguration
 
-S3 errors return `None`, but invalid JSON raises `ValueError`. This is intentional — S3 errors are transient and retryable, but corrupt config is a fatal condition that callers need to know about.
+`loadVaultConfiguration` first calls `configFileExists()`, which re-raises S3 errors (they propagate to callers). If the file exists but the subsequent `get_object` call fails, it returns `None`. Invalid JSON raises `ValueError`. This is intentional — existence-check failures propagate so callers can skip init safely, `get_object` failures are treated as retryable, and corrupt config is a fatal condition.
 
 ## configFileExists checks the wrong key
 
@@ -18,7 +18,7 @@ The original bug was: `getLatestBackupfromS3()` caught all S3 exceptions and ret
 
 ## Never log vault secrets
 
-Vault config files contain unseal keys and root tokens. Error messages in `loadVaultConfiguration` intentionally omit the exception detail (`{e}`) to avoid leaking JSON fragments that could contain secrets.
+Vault config files contain unseal keys and root tokens. JSON parse error messages intentionally omit the exception detail to avoid leaking JSON fragments that could contain secrets. S3 error messages (e.g. from `get_object` failures) do include `{str(e)}` since S3 exceptions don't contain vault secrets.
 
 ## ENABLE_RESTORE is case-insensitive
 
