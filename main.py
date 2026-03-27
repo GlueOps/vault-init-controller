@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 import warnings
 
@@ -6,6 +7,7 @@ from glueops.setup_logging import configure as go_configure_logging
 
 import vault_k8s_utils.utils as vault_k8s_utils
 import secret_backend.config as secret_config
+from secret_backend.config import BackupNotFoundError
 
 # configure logger
 logger = go_configure_logging(
@@ -33,7 +35,11 @@ if __name__ == "__main__":
     vault_key_shares = int(os.getenv("VAULT_KEY_SHARES","1"))
     vault_key_threshold = int(os.getenv("VAULT_KEY_THRESHOLD","1"))
     file_key = os.getenv("VAULT_SECRET_FILE", "vault_access.json")
-    restore_enabled = os.getenv("ENABLE_RESTORE","false")
+    restore_enabled = os.getenv("ENABLE_RESTORE","false").lower()
+
+    if restore_enabled == "true" and not secret_config.captain_domain:
+        logger.error("CAPTAIN_DOMAIN must be set when ENABLE_RESTORE is true")
+        sys.exit(1)
 
     vaultClient = vault_k8s_utils.VaultManager(namespace,vault_sts_name,vault_k8s_service_name,service_port,vault_label_selector)
 
@@ -72,18 +78,31 @@ if __name__ == "__main__":
             # check vault status 
             if(not vaultClient.isVaultIntialized()):
                 # Check if a backup already exists, if yes restore
-                latest_backup = secret_config.getLatestBackupfromS3()
-                config_file_exist = secret_config.configFileExists()
+                try:
+                    latest_backup = secret_config.getLatestBackupfromS3()
+                    config_file_exist = secret_config.configFileExists()
+                except BackupNotFoundError as e:
+                    logger.error(str(e))
+                    sys.exit(1)
+                except Exception as e:
+                    logger.error(f"Failed to check for existing backups/keys in S3: {str(e)}. Skipping initialization to avoid data loss.")
+                    time.sleep(reconcile_period)
+                    continue
                 if restore_enabled=="true" and latest_backup and config_file_exist:
                     backup_found = True
                     logger.info("Backup found, intializing vault...")
                     temp_file_name = secret_config.file_key.replace("vault_access.json","vault_access_temp.json")
                     vaultClient.initializeVault(vault_key_shares,vault_key_threshold,temp_file_name)
                 else:
-                    if(restore_enabled=="false"):   
+                    if(restore_enabled=="false"):
                         logger.info("Vault restore disabled, initializing vault from scratch..")
                     else:
-                        logger.info("Backup or keys doesn't exist, initializing vault from scratch..")
+                        missing = []
+                        if not latest_backup:
+                            missing.append("backup")
+                        if not config_file_exist:
+                            missing.append("config file")
+                        logger.info(f"Missing {' and '.join(missing)} in S3, initializing vault from scratch..")
                     vaultClient.initializeVault(vault_key_shares,vault_key_threshold,file_key)   
 
             else:
@@ -101,6 +120,7 @@ if __name__ == "__main__":
                    logger.info(vault_sts_name+"-"+str(i)+" is already unsealed")
 
             if restore_enabled=="true" and backup_found and not backup_restored:
+                logger.info(f"Restoring vault from backup: {latest_backup['Key']}")
                 vaultClient.restoreVaultfromS3(latest_backup['Key'])
                 backup_restored = True
     
