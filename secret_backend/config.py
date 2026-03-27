@@ -61,23 +61,19 @@ def configFileExists():
 
 # Function to load the JSON configuration from S3
 def loadVaultConfiguration(file_name):
+    if not configFileExists():
+        return None
     try:
-        # Check if the file exists before proceeding to read
-        if configFileExists():
-            obj = s3.get_object(Bucket=bucket_name, Key=file_name)
-            json_data = obj['Body'].read().decode('utf-8')
-            try:
-                data = json.loads(json_data)
-            except json.JSONDecodeError:
-                logger.error("Vault configuration file contains invalid JSON")
-                raise ValueError("Vault configuration file contains invalid JSON")
-
-            return data
-        else:
-            return None    
+        obj = s3.get_object(Bucket=bucket_name, Key=file_name)
+        json_data = obj['Body'].read().decode('utf-8')
     except Exception as e:
         logger.error(f"Error loading vault configuration: {str(e)}")
         return None
+    try:
+        return json.loads(json_data)
+    except json.JSONDecodeError:
+        logger.error("Vault configuration file contains invalid JSON")
+        raise ValueError("Vault configuration file contains invalid JSON")
 
 # Function to save the JSON configuration to S3
 def saveVaultConfiguration(json_data, secret_file_name):

@@ -35,7 +35,11 @@ if __name__ == "__main__":
     vault_key_shares = int(os.getenv("VAULT_KEY_SHARES","1"))
     vault_key_threshold = int(os.getenv("VAULT_KEY_THRESHOLD","1"))
     file_key = os.getenv("VAULT_SECRET_FILE", "vault_access.json")
-    restore_enabled = os.getenv("ENABLE_RESTORE","false")
+    restore_enabled = os.getenv("ENABLE_RESTORE","false").lower()
+
+    if restore_enabled == "true" and not secret_config.captain_domain:
+        logger.error("CAPTAIN_DOMAIN must be set when ENABLE_RESTORE is true")
+        sys.exit(1)
 
     vaultClient = vault_k8s_utils.VaultManager(namespace,vault_sts_name,vault_k8s_service_name,service_port,vault_label_selector)
 

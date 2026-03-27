@@ -1,4 +1,3 @@
-import pytest
 from secret_backend.config import _validate_snap_key
 
 
