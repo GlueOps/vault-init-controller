@@ -1,7 +1,9 @@
 import json
 import logging
 import os
+import re
 import boto3
+from datetime import datetime, timedelta
 
 
 class BackupNotFoundError(Exception):
@@ -10,6 +12,29 @@ class BackupNotFoundError(Exception):
 
 #init child logger
 logger = logging.getLogger('VAULT_INIT.config')
+
+SNAP_KEY_PATTERN = re.compile(
+    r".+/(\d{4}-\d{2}-\d{2})/vault_(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})\.snap$"
+)
+
+
+def _validate_snap_key(key):
+    match = SNAP_KEY_PATTERN.match(key)
+    if not match:
+        return False
+    dir_date_str, file_date_str = match.group(1), match.group(2)
+    try:
+        dir_date = datetime.strptime(dir_date_str, "%Y-%m-%d")
+        file_date = datetime.strptime(file_date_str, "%Y-%m-%dT%H:%M:%S")
+    except ValueError:
+        return False
+    if dir_date.date() != file_date.date():
+        return False
+    if dir_date.strftime("%Y-%m-%d") != dir_date_str:
+        return False
+    if file_date.strftime("%Y-%m-%dT%H:%M:%S") != file_date_str:
+        return False
+    return True
 
 
 # Replace this with your bucket name
@@ -80,29 +105,51 @@ def bucketExists(bucket_name):
 def getLatestBackupfromS3():
     try:
         paginator = s3.get_paginator('list_objects_v2')
-        page_iterator = paginator.paginate(Bucket=bucket_name,Prefix=captain_domain+"/"+backup_prefix)
+
+        if restore_this_backup:
+            return _findSpecificBackup(paginator)
+        else:
+            return _findLatestBackup(paginator)
+    except BackupNotFoundError:
+        raise
+    except Exception as e:
+        logger.error(f"Error checking backup in s3: {str(e)}")
+        raise
+
+
+def _findSpecificBackup(paginator):
+    page_iterator = paginator.paginate(Bucket=bucket_name, Prefix=captain_domain + "/" + backup_prefix)
+    for page in page_iterator:
+        if "Contents" in page:
+            for obj in page['Contents']:
+                if not obj['Key'].endswith('.snap'):
+                    continue
+                if os.path.basename(obj['Key']) == restore_this_backup:
+                    if not _validate_snap_key(obj['Key']):
+                        raise ValueError(f"Backup key does not match expected date format: {obj['Key']}")
+                    logger.info(f"Restoring this backup: {restore_this_backup}")
+                    return obj
+    raise BackupNotFoundError(f"RESTORE_THIS_BACKUP is set to '{restore_this_backup}' but no matching backup was found in S3")
+
+
+def _findLatestBackup(paginator):
+    today = datetime.utcnow().date()
+    for days_ago in range(45):
+        target_date = today - timedelta(days=days_ago)
+        date_prefix = f"{captain_domain}/{backup_prefix}/{target_date.isoformat()}/"
+        page_iterator = paginator.paginate(Bucket=bucket_name, Prefix=date_prefix)
         latest_snap = None
         for page in page_iterator:
             if "Contents" in page:
                 for obj in page['Contents']:
                     if not obj['Key'].endswith('.snap'):
                         continue
-                    if restore_this_backup and os.path.basename(obj['Key']) == restore_this_backup:
-                        logger.info(f"Restoring this backup: {restore_this_backup}")
-                        return obj
+                    if not _validate_snap_key(obj['Key']):
+                        raise ValueError(f"Backup key does not match expected date format: {obj['Key']}")
                     latest_snap = obj
-
-        if restore_this_backup:
-            raise BackupNotFoundError(f"RESTORE_THIS_BACKUP is set to '{restore_this_backup}' but no matching backup was found in S3")
-
         if latest_snap:
             logger.info(f"Latest backup found: {latest_snap['Key']}")
-        else:
-            logger.info("No .snap backups found in S3")
+            return latest_snap
 
-        return latest_snap
-    except BackupNotFoundError:
-        raise
-    except Exception as e:
-        logger.error(f"Error checking backup in s3: {str(e)}")
-        raise
+    logger.info("No .snap backups found in S3")
+    return None
