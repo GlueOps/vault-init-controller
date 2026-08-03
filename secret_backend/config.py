@@ -129,6 +129,14 @@ def _findSpecificBackup(paginator):
 
 
 def _findLatestBackup(paginator):
+    # Cheap existence probe: skip the day-by-day walk entirely when no backup
+    # keys exist at all (e.g. misconfigured domain or empty bucket). Check for
+    # "Contents" (matching configFileExists) rather than KeyCount, which fails
+    # safe if an S3-compatible backend omits KeyCount while returning objects.
+    probe = s3.list_objects_v2(Bucket=bucket_name, Prefix=f"{captain_domain}/{backup_prefix}/", MaxKeys=1)
+    if not probe.get("Contents"):
+        logger.info("No backup keys found in S3")
+        return None
     today = datetime.utcnow().date()
     for days_ago in range(185):
         target_date = today - timedelta(days=days_ago)
@@ -146,6 +154,7 @@ def _findLatestBackup(paginator):
         if latest_snap:
             logger.info(f"Latest backup found: {latest_snap['Key']}")
             return latest_snap
+        logger.info(f"No backup found for {target_date.isoformat()}, checking previous day")
 
     logger.info("No .snap backups found in S3")
     return None

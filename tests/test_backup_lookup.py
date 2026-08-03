@@ -52,6 +52,21 @@ class TestFindLatestBackupSuccess:
         result = _findLatestBackup(paginator)
         assert result["Key"] == key
 
+    def test_walks_when_keys_exist(self, mock_config_globals):
+        # Positive mirror of test_skips_walk_when_no_keys_exist: a non-empty
+        # probe must proceed to the day walk and return the backup.
+        key = snap_key("2026-03-16", "18:00:00")
+        mock_config_globals.list_objects_v2.return_value = {
+            "KeyCount": 1,
+            "Contents": [make_snap_obj(key)],
+        }
+        paginator = make_paginator_by_prefix({
+            f"{DOMAIN}/{PREFIX}/2026-03-16/": [{"Contents": [make_snap_obj(key)]}],
+        })
+        result = _findLatestBackup(paginator)
+        assert result["Key"] == key
+        paginator.paginate.assert_called()
+
     def test_multi_page_returns_last_snap(self):
         key1 = snap_key("2026-03-16", "08:00:00")
         key2 = snap_key("2026-03-16", "18:00:00")
@@ -112,6 +127,18 @@ class TestFindLatestBackupFailure:
         paginator = make_paginator_by_prefix({})
         result = _findLatestBackup(paginator)
         assert result is None
+
+    def test_skips_walk_when_no_keys_exist(self, mock_config_globals):
+        mock_config_globals.list_objects_v2.return_value = {"KeyCount": 0}
+        paginator = make_paginator_by_prefix({})
+        result = _findLatestBackup(paginator)
+        assert result is None
+        mock_config_globals.list_objects_v2.assert_called_once_with(
+            Bucket="test-bucket",
+            Prefix=f"{DOMAIN}/{PREFIX}/",
+            MaxKeys=1,
+        )
+        paginator.paginate.assert_not_called()
 
     def test_page_without_contents_key(self):
         paginator = make_paginator_by_prefix({
