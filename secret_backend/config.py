@@ -130,7 +130,7 @@ def _findSpecificBackup(paginator):
 
 def _findLatestBackup(paginator):
     today = datetime.utcnow().date()
-    for days_ago in range(45):
+    for days_ago in range(185):
         target_date = today - timedelta(days=days_ago)
         date_prefix = f"{captain_domain}/{backup_prefix}/{target_date.isoformat()}/"
         page_iterator = paginator.paginate(Bucket=bucket_name, Prefix=date_prefix)

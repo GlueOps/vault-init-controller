@@ -88,8 +88,8 @@ class TestFindLatestBackupSuccess:
         result = _findLatestBackup(paginator)
         assert result["Key"] == key
 
-    def test_day_44_boundary_included(self):
-        target_date = date(2026, 1, 31)  # 44 days before 2026-03-16
+    def test_day_184_boundary_included(self):
+        target_date = date(2025, 9, 13)  # 184 days before 2026-03-16
         key = f"{DOMAIN}/{PREFIX}/{target_date.isoformat()}/vault_{target_date.isoformat()}T12:00:00.snap"
         paginator = make_paginator_by_prefix({
             f"{DOMAIN}/{PREFIX}/{target_date.isoformat()}/": [{"Contents": [make_snap_obj(key)]}],
@@ -103,12 +103,12 @@ class TestFindLatestBackupSuccess:
         call_args = [c.kwargs["Prefix"] for c in paginator.paginate.call_args_list]
         assert call_args[0] == f"{DOMAIN}/{PREFIX}/2026-03-16/"
         assert call_args[1] == f"{DOMAIN}/{PREFIX}/2026-03-15/"
-        assert call_args[-1] == f"{DOMAIN}/{PREFIX}/2026-01-31/"
-        assert len(call_args) == 45
+        assert call_args[-1] == f"{DOMAIN}/{PREFIX}/2025-09-13/"
+        assert len(call_args) == 185
 
 
 class TestFindLatestBackupFailure:
-    def test_no_backups_in_45_days(self):
+    def test_no_backups_in_185_days(self):
         paginator = make_paginator_by_prefix({})
         result = _findLatestBackup(paginator)
         assert result is None

@@ -6,7 +6,7 @@ Backup keys follow `{CAPTAIN_DOMAIN}/{BACKUP_PREFIX}/{YYYY-MM-DD}/vault_{YYYY-MM
 
 ## Day-by-day reverse search
 
-`_findLatestBackup` searches from today backward (up to 45 days) using date-scoped S3 prefixes (e.g. `{domain}/{prefix}/2026-03-16/`). This avoids listing the entire backup history. In the common case (backups exist today), it's a single S3 API call.
+`_findLatestBackup` searches from today backward (up to 185 days) using date-scoped S3 prefixes (e.g. `{domain}/{prefix}/2026-03-16/`). This avoids listing the entire backup history. In the common case (backups exist today), it's a single S3 API call.
 
 ## Key format validation is safety-critical
 
