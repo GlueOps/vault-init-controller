@@ -152,6 +152,7 @@ def _findLatestBackup(paginator):
         if latest_snap:
             logger.info(f"Latest backup found: {latest_snap['Key']}")
             return latest_snap
+        logger.info(f"No backup found for {target_date.isoformat()}, checking previous day")
 
     logger.info("No .snap backups found in S3")
     return None
