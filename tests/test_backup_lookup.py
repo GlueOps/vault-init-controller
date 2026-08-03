@@ -113,6 +113,18 @@ class TestFindLatestBackupFailure:
         result = _findLatestBackup(paginator)
         assert result is None
 
+    def test_skips_walk_when_no_keys_exist(self, mock_config_globals):
+        mock_config_globals.list_objects_v2.return_value = {"KeyCount": 0}
+        paginator = make_paginator_by_prefix({})
+        result = _findLatestBackup(paginator)
+        assert result is None
+        mock_config_globals.list_objects_v2.assert_called_once_with(
+            Bucket="test-bucket",
+            Prefix=f"{DOMAIN}/{PREFIX}/",
+            MaxKeys=1,
+        )
+        paginator.paginate.assert_not_called()
+
     def test_page_without_contents_key(self):
         paginator = make_paginator_by_prefix({
             f"{DOMAIN}/{PREFIX}/2026-03-16/": [{}],
