@@ -1,5 +1,31 @@
 # Changelog
 
+## [2.15.0](https://github.com/GlueOps/vault-init-controller/compare/v2.14.0...v2.15.0) (2026-08-22)
+
+
+### Features
+
+* update docker/login-action to v4.5.0 #minor ([#446](https://github.com/GlueOps/vault-init-controller/issues/446)) ([48f6477](https://github.com/GlueOps/vault-init-controller/commit/48f64772642590b1ea8b881246881c3d6dd4aa39))
+
+
+### Miscellaneous Chores
+
+* **patch:** update boto3 to 1.43.41 #patch ([#428](https://github.com/GlueOps/vault-init-controller/issues/428)) ([24ae378](https://github.com/GlueOps/vault-init-controller/commit/24ae3785683e94ddb1ab4a9f841aef29e1e0e2d9))
+* **patch:** update boto3 to 1.43.42 #patch ([#430](https://github.com/GlueOps/vault-init-controller/issues/430)) ([4fe354c](https://github.com/GlueOps/vault-init-controller/commit/4fe354c2cbf6d71cb55ea004a41fd06281d4131c))
+* **patch:** update boto3 to 1.43.43 #patch ([#431](https://github.com/GlueOps/vault-init-controller/issues/431)) ([1cce66f](https://github.com/GlueOps/vault-init-controller/commit/1cce66fd7fd108a2f847182ff02094032a0388a1))
+* **patch:** update boto3 to 1.43.44 #patch ([#432](https://github.com/GlueOps/vault-init-controller/issues/432)) ([99d0c86](https://github.com/GlueOps/vault-init-controller/commit/99d0c86c9513311d2650309425771129f4b1098c))
+* **patch:** update boto3 to 1.43.45 #patch ([#433](https://github.com/GlueOps/vault-init-controller/issues/433)) ([117f63b](https://github.com/GlueOps/vault-init-controller/commit/117f63bce4843831a77a79f0e1e75cfe427f487b))
+* **patch:** update boto3 to 1.43.46 #patch ([#435](https://github.com/GlueOps/vault-init-controller/issues/435)) ([c7bf352](https://github.com/GlueOps/vault-init-controller/commit/c7bf352c9064cf71604958dcfb660874b3ffdcaf))
+* **patch:** update boto3 to 1.43.47 #patch ([#436](https://github.com/GlueOps/vault-init-controller/issues/436)) ([f68199d](https://github.com/GlueOps/vault-init-controller/commit/f68199d5ef8a108f67658685d8a8736ff086d19c))
+* **patch:** update boto3 to 1.43.48 #patch ([#438](https://github.com/GlueOps/vault-init-controller/issues/438)) ([3c9985c](https://github.com/GlueOps/vault-init-controller/commit/3c9985ce54e044e42fdf67046381f4495a9ea398))
+* **patch:** update boto3 to 1.43.49 #patch ([#439](https://github.com/GlueOps/vault-init-controller/issues/439)) ([4cb36bc](https://github.com/GlueOps/vault-init-controller/commit/4cb36bc5d853d833cdc2009e8e5f06c68181673b))
+* **patch:** update boto3 to 1.43.50 #patch ([#440](https://github.com/GlueOps/vault-init-controller/issues/440)) ([50df49d](https://github.com/GlueOps/vault-init-controller/commit/50df49d524de8b6b4044b5b8a69b983bec996ef4))
+* **patch:** update boto3 to 1.43.51 #patch ([#441](https://github.com/GlueOps/vault-init-controller/issues/441)) ([32a337d](https://github.com/GlueOps/vault-init-controller/commit/32a337db2e1413be1bcaaddc5b605fca1e1b2a20))
+* **patch:** update boto3 to 1.43.52 #patch ([#442](https://github.com/GlueOps/vault-init-controller/issues/442)) ([c8571dd](https://github.com/GlueOps/vault-init-controller/commit/c8571ddc603adefe97cbc7b796a7c480bb7e9b8f))
+* **patch:** update boto3 to 1.43.53 #patch ([#443](https://github.com/GlueOps/vault-init-controller/issues/443)) ([5aca5fc](https://github.com/GlueOps/vault-init-controller/commit/5aca5fc36c5ed12b718196007a7fb59f99ef5943))
+* **patch:** update boto3 to 1.43.54 #patch ([#445](https://github.com/GlueOps/vault-init-controller/issues/445)) ([64d6729](https://github.com/GlueOps/vault-init-controller/commit/64d6729198417065b2f73217382b380dca9f0441))
+* **patch:** update kubernetes to 36.0.3 #patch ([#437](https://github.com/GlueOps/vault-init-controller/issues/437)) ([5605f1e](https://github.com/GlueOps/vault-init-controller/commit/5605f1e5711578099fa74333cb03b5e7e98c5cf4))
+
 ## [2.14.0](https://github.com/GlueOps/vault-init-controller/compare/v2.13.1...v2.14.0) (2026-08-03)
 
 
