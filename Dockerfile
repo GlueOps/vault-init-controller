@@ -1,4 +1,4 @@
-FROM python:3.15.1-alpine@sha256:54448f67d7c31c39e5cdd3ea2d6382395ce142806c284425f8e897d78a0465b3 AS test
+FROM python:3.15.2-alpine@sha256:eb37f58646a901dc7727cf448cae36daaefaba79de33b5058dab79aa4c04aefb AS test
 
 WORKDIR /app
 
@@ -8,7 +8,7 @@ RUN pip3 install -r vault-init/requirements.txt -r vault-init/requirements-dev.t
 
 RUN pytest vault-init/tests/
 
-FROM python:3.15.1-alpine@sha256:54448f67d7c31c39e5cdd3ea2d6382395ce142806c284425f8e897d78a0465b3
+FROM python:3.15.2-alpine@sha256:eb37f58646a901dc7727cf448cae36daaefaba79de33b5058dab79aa4c04aefb
 
 WORKDIR /app
 
